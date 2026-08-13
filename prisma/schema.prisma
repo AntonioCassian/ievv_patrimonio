@@ -1,0 +1,141 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ====================
+// ENUMS
+// ====================
+
+enum Role {
+  ADMINISTRADOR
+  PASTOR
+  SUPERVISOR
+  LIDER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum DepartmentStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AssetStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+  DISPOSED
+}
+
+// ====================
+// USER
+// ====================
+
+model User {
+  id                String     @id @default(cuid())
+  name              String
+  email             String     @unique
+  phone             String?
+  password          String?
+  role              Role
+  status            UserStatus @default(ACTIVE)
+  temporaryPassword Boolean    @default(false)
+  lastLoginAt       DateTime?
+
+  departmentId String?
+  department   Department? @relation("DepartmentUsers", fields: [departmentId], references: [id])
+
+  ledDepartments Department[] @relation("DepartmentLeader")
+
+  createdDepartments Department[] @relation("DepartmentCreator")
+
+  passwordResets PasswordReset[]
+
+  responsibleAssets Asset[] @relation("AssetResponsible")
+  createdAssets     Asset[] @relation("AssetCreator")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([departmentId])
+}
+
+model Department {
+  id     String           @id @default(cuid())
+  name   String           @unique
+  status DepartmentStatus @default(ACTIVE)
+
+  leaderId String
+  leader   User   @relation("DepartmentLeader", fields: [leaderId], references: [id])
+
+  users  User[]  @relation("DepartmentUsers")
+  assets Asset[] @relation("DepartmentAssets")
+
+  createdById String?
+  createdBy   User?   @relation("DepartmentCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([leaderId])
+  @@index([createdById])
+}
+
+// ====================
+// PASSWORD RESET
+// ====================
+model PasswordReset {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
+}
+model Asset {
+  id              String      @id @default(cuid())
+  code            String      @unique
+  name            String
+  description     String?
+  category        String
+  type            String
+  value           Decimal?    @db.Decimal(12, 2)
+  acquisitionDate DateTime?
+  imageUrl        String?
+  status          AssetStatus @default(AVAILABLE)
+
+  departmentId String
+  department Department @relation("DepartmentAssets", fields: [departmentId], references: [id])
+
+  responsibleId String?
+  responsible User? @relation("AssetResponsible", fields: [responsibleId], references: [id])
+
+  createdById String
+  createdBy User @relation("AssetCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([departmentId])
+  @@index([responsibleId])
+  @@index([createdById])
+  @@index([status])
+}
