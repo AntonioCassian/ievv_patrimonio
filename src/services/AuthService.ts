@@ -80,7 +80,7 @@ class AuthService {
         };
     }
 
-        // =========================
+    // =========================
     // ESQUECI A SENHA
     // =========================
 
@@ -235,6 +235,41 @@ class AuthService {
         return {
             message: "Senha redefinida com sucesso.",
         };
+    }
+
+
+    async getMe(userId: string) {
+        const user = await prisma.user.findUnique({
+            where: {
+                id: userId,
+            },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                role: true,
+                status: true,
+                temporaryPassword: true,
+                lastLoginAt: true,
+                createdAt: false,
+                updatedAt: false,
+
+                department: {
+                    select: {
+                        id: true,
+                        name: true,
+                        status: true,
+                    },
+                },
+            },
+        });
+
+        if (!user) {
+            throw new Error("USER_NOT_FOUND");
+        }
+
+        return user;
     }
 
 }

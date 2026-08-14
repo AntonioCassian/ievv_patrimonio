@@ -7,7 +7,7 @@ import { authMiddleware } from "../middleware/auth.middleware.js";
 const router = Router();
 
 router.post(
-    "/login",
+    "/auth/login",
     validate({
         body: loginSchema,
     }),
@@ -15,7 +15,7 @@ router.post(
 );
 
 router.post(
-    "/forgot-password",
+    "/auth/forgot-password",
     validate({
         body: forgotPasswordSchema,
     }),
@@ -23,7 +23,7 @@ router.post(
 );
 
 router.post(
-    "/reset-password",
+    "/auth/reset-password",
     validate({
         body: resetPasswordSchema,
     }),
@@ -31,9 +31,15 @@ router.post(
 );
 
 router.post(
-    "/logout",
+    "/auth/logout",
     authMiddleware,
     AuthController.logout
+);
+
+router.get(
+    "/me",
+    authMiddleware,
+    AuthController.me
 );
 
 export default router;

@@ -170,6 +170,50 @@ class AuthController {
             });
         }
     };
+
+    me = async (
+        req: Request,
+        res: Response
+    ) => {
+        try {
+            const user = req.user;
+
+            if (!user) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Usuário não autenticado.",
+                });
+            }
+
+            const data =
+                await authService.getMe(user.id);
+
+            return res.status(200).json({
+                success: true,
+                message:
+                    "Dados do usuário retornados com sucesso.",
+                data,
+            });
+        } catch (error) {
+            console.error(error);
+
+            if (
+                error instanceof Error &&
+                error.message === "USER_NOT_FOUND"
+            ) {
+                return res.status(404).json({
+                    success: false,
+                    message: "Usuário não encontrado.",
+                });
+            }
+
+            return res.status(500).json({
+                success: false,
+                message:
+                    "Erro interno ao buscar usuário.",
+            });
+        }
+    };
 }
 
 export default new AuthController();

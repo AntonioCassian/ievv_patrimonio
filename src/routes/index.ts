@@ -1,6 +1,7 @@
 import { Router } from "express";
 import userRoutes from "./user.routes.js";
 import authRoutes from "./auth.routes.js";
+import dashboardRoutes from "./dashboard.routes.js";
 import departmentRoutes from "./departament.routes.js";
 import loanRoutes from "./loan.routes.js";
 import assetRoutes from "./asset.routes.js";
@@ -8,7 +9,8 @@ import assetOperationRoutes from "./asset-operation.routes.js";
 
 const router = Router();
 
-router.use("/api/auth", authRoutes);
+router.use("/api", authRoutes);
+router.use("/api", dashboardRoutes);
 router.use("/api", departmentRoutes);
 router.use("/api", userRoutes);
 router.use("/api", loanRoutes);
