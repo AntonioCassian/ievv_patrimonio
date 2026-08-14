@@ -10,6 +10,7 @@ import {
     assetIdSchema,
     assetFiltersSchema,
 } from "../schema/asset.schema.js";
+import { upload } from "../middleware/upload.middleware.js";
 
 const router = Router();
 
@@ -21,6 +22,7 @@ router.post(
     validate({
         body: createAssetSchema,
     }),
+    upload.single("image"),
     assetController.create
 );
 

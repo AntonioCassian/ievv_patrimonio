@@ -15,7 +15,7 @@ export class AssetController {
 
     create = async (
         req: Request,
-        res: Response
+        res: Response,
     ) => {
         try {
             const user = req.user;
@@ -31,7 +31,8 @@ export class AssetController {
             const asset =
                 await this.assetService.create(
                     req.body,
-                    user.id
+                    user.id,
+                    req.file
                 );
 
             return res.status(201).json({

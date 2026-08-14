@@ -1,5 +1,7 @@
 import { Prisma } from "../generated/prisma/client.js";
+import type { Request } from "express";
 import prisma from "../lib/prisma.js";
+import { uploadImage } from "../lib/upload.js";
 import type { AssetFiltersDTO } from "../schema/asset.schema.js";
 
 import type {
@@ -24,35 +26,30 @@ export class AssetService {
 
     async create(
         data: CreateAssetDTO,
-        createdById: string
+        createdById: string,
+        file?: NonNullable<Request["file"]>
     ) {
-        // Verifica se o departament existe
-        const department =
-            await prisma.department.findUnique({
-                where: {
-                    id: data.departmentId,
-                },
-            });
+        // Verifica se o departamento existe
+        const department = await prisma.department.findUnique({
+            where: {
+                id: data.departmentId,
+            },
+        });
 
         if (!department) {
-            throw new Error(
-                "DEPARTMENT_NOT_FOUND"
-            );
+            throw new Error("DEPARTMENT_NOT_FOUND");
         }
 
         // Verifica o responsável
         if (data.responsibleId) {
-            const responsible =
-                await prisma.user.findUnique({
-                    where: {
-                        id: data.responsibleId,
-                    },
-                });
+            const responsible = await prisma.user.findUnique({
+                where: {
+                    id: data.responsibleId,
+                },
+            });
 
             if (!responsible) {
-                throw new Error(
-                    "RESPONSIBLE_NOT_FOUND"
-                );
+                throw new Error("RESPONSIBLE_NOT_FOUND");
             }
         }
 
@@ -67,6 +64,20 @@ export class AssetService {
             })
         ) {
             code = this.generateCode();
+        }
+
+        // =========================
+        // UPLOAD DA IMAGEM
+        // =========================
+
+        let imageUrl: string | null = null;
+
+        if (file) {
+            imageUrl = await uploadImage(
+                file,
+                "assets",
+                "patrimonios"
+            );
         }
 
         try {
@@ -98,9 +109,7 @@ export class AssetService {
                         ),
                     }),
 
-                    ...(data.imageUrl !== undefined && {
-                        imageUrl: data.imageUrl,
-                    }),
+                    imageUrl,
                 },
             });
         } catch (error) {

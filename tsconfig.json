@@ -7,7 +7,7 @@
     "moduleResolution": "NodeNext",
     "target": "ESNext",
 
-    "types": ["node"],
+    "types": ["node", "multer"],
 
     "sourceMap": true,
     "declaration": true,
