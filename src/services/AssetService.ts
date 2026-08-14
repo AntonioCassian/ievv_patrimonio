@@ -1,5 +1,6 @@
 import { Prisma } from "../generated/prisma/client.js";
 import prisma from "../lib/prisma.js";
+import type { AssetFiltersDTO } from "../schema/asset.schema.js";
 
 import type {
     CreateAssetDTO,
@@ -25,7 +26,7 @@ export class AssetService {
         data: CreateAssetDTO,
         createdById: string
     ) {
-        // Verifica se o departamento existe
+        // Verifica se o departament existe
         const department =
             await prisma.department.findUnique({
                 where: {
@@ -117,8 +118,70 @@ export class AssetService {
         }
     }
 
-    async findAll() {
+    async findAll(
+        filters: AssetFiltersDTO = {}
+    ) {
+        const {
+            name,
+            category,
+            department,
+            status,
+            type,
+        } = filters;
+
+        if (department) {
+            const departmentExists =
+                await prisma.department.findUnique({
+                    where: {
+                        id: department,
+                    },
+                });
+
+            if (!departmentExists) {
+                throw new Error(
+                    "DEPARTMENT_NOT_FOUND"
+                );
+            }
+        }
+
+        const where: Prisma.AssetWhereInput = {};
+
+        if (name) {
+            where.name = {
+                contains: name,
+                mode: "insensitive",
+            };
+        }
+
+        if (category) {
+            where.category = {
+                contains: category,
+                mode: "insensitive",
+            };
+        }
+
+        if (department) {
+            where.departmentId = department;
+        }
+
+        if (type) {
+            where.type = {
+                contains: type,
+                mode: "insensitive",
+            };
+        }
+
+        if (status) {
+            where.status = status;
+        } else {
+            where.status = {
+                not: "DISPOSED",
+            };
+        }
+
         return await prisma.asset.findMany({
+            where,
+
             include: {
                 department: {
                     select: {
@@ -209,7 +272,7 @@ export class AssetService {
             );
         }
 
-        // Verifica departamento
+        // Verifica departament
         if (data.departmentId) {
             const department =
                 await prisma.department.findUnique({

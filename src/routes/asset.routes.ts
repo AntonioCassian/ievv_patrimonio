@@ -8,6 +8,7 @@ import {
     createAssetSchema,
     updateAssetSchema,
     assetIdSchema,
+    assetFiltersSchema,
 } from "../schema/asset.schema.js";
 
 const router = Router();
@@ -25,6 +26,9 @@ router.post(
 
 router.get(
     "/patrimonios",
+    validate({
+        query: assetFiltersSchema,
+    }),
     assetController.findAll
 );
 

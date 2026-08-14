@@ -26,3 +26,15 @@ export interface UpdateAssetDTO {
         | "MAINTENANCE"
         | "DISPOSED";
 }
+
+export interface AssetFiltersDTO {
+    name?: string;
+    category?: string;
+    department?: string;
+    status?:
+        | "AVAILABLE"
+        | "IN_USE"
+        | "MAINTENANCE"
+        | "DISPOSED";
+    type?: string;
+}

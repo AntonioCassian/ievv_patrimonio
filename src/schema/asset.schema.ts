@@ -198,3 +198,32 @@ export const assetIdSchema = z.object({
             "ID do patrimônio é obrigatório"
         ),
 });
+
+export const assetFiltersSchema = z.object({
+    name: z.string().trim().min(1).optional(),
+
+    category: z.string().trim().min(1).optional(),
+
+    department: z.string().trim().min(1).optional(),
+
+    status: z
+        .enum([
+            "AVAILABLE",
+            "IN_USE",
+            "MAINTENANCE",
+            "DISPOSED",
+        ])
+        .optional(),
+
+    type: z.string().trim().min(1).optional(),
+});
+
+export type CreateAssetDTO =
+    z.infer<typeof createAssetSchema>;
+
+export type UpdateAssetDTO =
+    z.infer<typeof updateAssetSchema>;
+
+export type AssetFiltersDTO = z.infer<
+    typeof assetFiltersSchema
+>;

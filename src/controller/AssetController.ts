@@ -87,12 +87,14 @@ export class AssetController {
     };
 
     findAll = async (
-        _req: Request,
+        req: Request,
         res: Response
     ) => {
         try {
             const assets =
-                await this.assetService.findAll();
+                await this.assetService.findAll(
+                    req.query
+                );
 
             return res.status(200).json({
                 success: true,
@@ -100,6 +102,18 @@ export class AssetController {
             });
         } catch (error) {
             console.error(error);
+
+            if (
+                error instanceof Error &&
+                error.message ===
+                "DEPARTMENT_NOT_FOUND"
+            ) {
+                return res.status(404).json({
+                    success: false,
+                    message:
+                        "Departamento não encontrado.",
+                });
+            }
 
             return res.status(500).json({
                 success: false,
@@ -129,7 +143,7 @@ export class AssetController {
             if (
                 error instanceof Error &&
                 error.message ===
-                    "ASSET_NOT_FOUND"
+                "ASSET_NOT_FOUND"
             ) {
                 return res.status(404).json({
                     success: false,
@@ -225,7 +239,7 @@ export class AssetController {
             if (
                 error instanceof Error &&
                 error.message ===
-                    "ASSET_NOT_FOUND"
+                "ASSET_NOT_FOUND"
             ) {
                 return res.status(404).json({
                     success: false,
