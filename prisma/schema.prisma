@@ -42,6 +42,22 @@ enum LoanStatus {
   CANCELLED
 }
 
+enum OperationType {
+  USUFRUTO
+  DOACAO
+}
+
+enum OperationStatus {
+  ACTIVE
+  FINISHED
+  CANCELLED
+}
+
+enum UsufructHistoryType {
+  CREATED
+  RENEWED
+}
+
 model User {
   id                String     @id @default(cuid())
   name              String
@@ -66,6 +82,12 @@ model User {
 
   loansAsResponsible Loan[] @relation("ResponsibleLoans")
   createdLoans       Loan[] @relation("LoanCreator")
+
+  operationResponsible AssetOperation[] @relation("OperationResponsible")
+
+  createdOperations AssetOperation[] @relation("OperationCreator")
+
+  usufructHistoryCreated UsufructHistory[] @relation("UsufructHistoryCreator")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -120,16 +142,27 @@ model Asset {
   imageUrl        String?
   status          AssetStatus @default(AVAILABLE)
 
+  // Quantidade do patrimônio
+  quantity          Int @default(1)
+  quantityAvailable Int @default(1)
+
+  // Departamento
   departmentId String
   department   Department @relation("DepartmentAssets", fields: [departmentId], references: [id])
 
+  // Responsável pelo patrimônio
   responsibleId String?
   responsible   User?   @relation("AssetResponsible", fields: [responsibleId], references: [id])
 
+  // Usuário que cadastrou
   createdById String
   createdBy   User   @relation("AssetCreator", fields: [createdById], references: [id])
 
+  // Empréstimos
   loans Loan[] @relation("AssetLoans")
+
+  // Usufrutos e doações
+  operations AssetOperation[] @relation("AssetOperations")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -143,12 +176,15 @@ model Asset {
 model Loan {
   id String @id @default(cuid())
 
+  // Patrimônio
   assetId String
   asset   Asset  @relation("AssetLoans", fields: [assetId], references: [id])
 
+  // Responsável pelo empréstimo
   responsibleId String
   responsible   User   @relation("ResponsibleLoans", fields: [responsibleId], references: [id])
 
+  // Usuário que cadastrou o empréstimo
   createdById String
   createdBy   User   @relation("LoanCreator", fields: [createdById], references: [id])
 
@@ -156,7 +192,8 @@ model Loan {
   withdrawalDate     DateTime
   expectedReturnDate DateTime
   returnedAt         DateTime?
-  status             LoanStatus @default(ACTIVE)
+
+  status LoanStatus @default(ACTIVE)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -165,4 +202,81 @@ model Loan {
   @@index([responsibleId])
   @@index([createdById])
   @@index([status])
+}
+
+model AssetOperation {
+  id String @id @default(cuid())
+
+  type OperationType
+
+  status OperationStatus @default(ACTIVE)
+
+  // Patrimônio
+  assetId String
+  asset   Asset  @relation("AssetOperations", fields: [assetId], references: [id])
+
+  quantity Int
+
+  operationDate DateTime
+  observations  String?
+
+  // ====================
+  // USUFRUTO
+  // ====================
+
+  responsibleId String?
+  responsible   User?   @relation("OperationResponsible", fields: [responsibleId], references: [id])
+
+  startDate DateTime?
+  endDate   DateTime?
+  purpose   String?
+
+  // ====================
+  // DOAÇÃO
+  // ====================
+
+  donor        String?
+  donationDate DateTime?
+  document     String?
+
+  // Usuário que realizou a operação
+  createdById String
+  createdBy   User   @relation("OperationCreator", fields: [createdById], references: [id])
+
+  // Histórico das renovações
+  histories UsufructHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([assetId])
+  @@index([responsibleId])
+  @@index([createdById])
+  @@index([type])
+  @@index([status])
+}
+
+model UsufructHistory {
+  id String @id @default(cuid())
+
+  operationId String
+  operation   AssetOperation @relation(fields: [operationId], references: [id], onDelete: Cascade)
+
+  type UsufructHistoryType
+
+  // Datas
+  previousEndDate DateTime?
+  newEndDate      DateTime?
+
+  // Justificativa da renovação
+  justification String?
+
+  // Usuário que realizou a alteração
+  createdById String
+  createdBy   User   @relation("UsufructHistoryCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([operationId])
+  @@index([createdById])
 }
