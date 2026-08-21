@@ -17,6 +17,6 @@ router.use("/api", userRoutes);
 router.use("/api", loanRoutes);
 router.use("/api", assetRoutes);
 router.use("/api", assetOperationRoutes);
-router.use("/api/church-settings", chutchSettingsRoutes);
+router.use("/api", chutchSettingsRoutes);
 
 export default router;
