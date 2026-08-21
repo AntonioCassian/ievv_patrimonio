@@ -280,3 +280,15 @@ model UsufructHistory {
   @@index([operationId])
   @@index([createdById])
 }
+
+model ChurchSettings {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  city      String?
+  state     String?
+  phone     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
