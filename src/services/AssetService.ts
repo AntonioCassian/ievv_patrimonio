@@ -163,11 +163,9 @@ export class AssetService {
         }
 
         if (category) {
-            where.category = {
-                contains: category,
-                mode: "insensitive",
-            };
+            where.category = category;
         }
+
 
         if (department) {
             where.departmentId = department;

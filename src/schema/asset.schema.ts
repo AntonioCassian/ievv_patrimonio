@@ -23,13 +23,23 @@ export const createAssetSchema = z
             )
             .optional(),
 
-        category: z
-            .string()
-            .trim()
-            .min(
-                1,
-                "A categoria é obrigatória"
-            ),
+        category: z.enum([
+            "UTENSILIO",
+            "COZINHA",
+            "ACESSORIO",
+            "MOVEIS",
+            "DIVERSOS",
+            "DECORACAO",
+            "SOM",
+            "ELETRODOMESTICO",
+            "INFORMATICA",
+            "ILUMINACAO",
+            "LIVROS",
+            "HIDRAULICOS",
+            "FOTOGRAFIA",
+        ], {
+            message: "A categoria é obrigatória e deve ser válida",
+        }),
 
         departmentId: z
             .string()
@@ -109,13 +119,25 @@ export const updateAssetSchema = z
             .optional(),
 
         category: z
-            .string()
-            .trim()
-            .min(
-                1,
-                "A categoria é obrigatória"
-            )
+            .enum([
+                "UTENSILIO",
+                "COZINHA",
+                "ACESSORIO",
+                "MOVEIS",
+                "DIVERSOS",
+                "DECORACAO",
+                "SOM",
+                "ELETRODOMESTICO",
+                "INFORMATICA",
+                "ILUMINACAO",
+                "LIVROS",
+                "HIDRAULICOS",
+                "FOTOGRAFIA",
+            ], {
+                message: "A categoria deve ser válida",
+            })
             .optional(),
+
 
         departmentId: z
             .string()

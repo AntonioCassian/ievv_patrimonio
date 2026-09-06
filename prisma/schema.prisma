@@ -58,6 +58,22 @@ enum UsufructHistoryType {
   RENEWED
 }
 
+enum AssetCategory {
+  UTENSILIO
+  COZINHA
+  ACESSORIO
+  MOVEIS
+  DIVERSOS
+  DECORACAO
+  SOM
+  ELETRODOMESTICO
+  INFORMATICA
+  ILUMINACAO
+  LIVROS
+  HIDRAULICOS
+  FOTOGRAFIA
+}
+
 model User {
   id                String     @id @default(cuid())
   name              String
@@ -135,7 +151,7 @@ model Asset {
   code            String      @unique
   name            String
   description     String?
-  category        String
+  category    AssetCategory
   type            String
   value           Decimal?    @db.Decimal(12, 2)
   acquisitionDate DateTime?
