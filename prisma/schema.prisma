@@ -107,6 +107,8 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  // loans     Loan[]
+  returnedLoans Loan[] @relation("LoanReturner")
 
   @@index([departmentId])
 }
@@ -147,16 +149,16 @@ model PasswordReset {
 }
 
 model Asset {
-  id              String      @id @default(cuid())
-  code            String      @unique
+  id              String        @id @default(cuid())
+  code            String        @unique
   name            String
   description     String?
-  category    AssetCategory
+  category        AssetCategory
   type            String
-  value           Decimal?    @db.Decimal(12, 2)
+  value           Decimal?      @db.Decimal(12, 2)
   acquisitionDate DateTime?
   imageUrl        String?
-  status          AssetStatus @default(AVAILABLE)
+  status          AssetStatus   @default(AVAILABLE)
 
   // Quantidade do patrimônio
   quantity          Int @default(1)
@@ -208,6 +210,12 @@ model Loan {
   withdrawalDate     DateTime
   expectedReturnDate DateTime
   returnedAt         DateTime?
+
+  returnedById String?
+  returnedBy   User?   @relation("LoanReturner", fields: [returnedById], references: [id])
+
+  returnCondition String?
+  returnNotes     String?
 
   status LoanStatus @default(ACTIVE)
 
@@ -298,12 +306,12 @@ model UsufructHistory {
 }
 
 model ChurchSettings {
-  id        String   @id @default(cuid())
-  name      String
-  address   String?
-  city      String?
-  state     String?
-  phone     String?
+  id      String  @id @default(cuid())
+  name    String
+  address String?
+  city    String?
+  state   String?
+  phone   String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

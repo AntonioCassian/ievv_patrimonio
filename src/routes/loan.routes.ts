@@ -12,6 +12,7 @@ import {
     createLoanSchema,
     updateLoanSchema,
     loanIdSchema,
+    returnLoanSchema,
 } from "../schema/loan.schema.js";
 
 const router = Router();
@@ -62,6 +63,7 @@ router.post(
     "/emprestimos/:id/devolucao",
     validate({
         params: loanIdSchema,
+        body: returnLoanSchema,
     }),
     loanController.return
 );

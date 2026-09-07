@@ -4,16 +4,19 @@ import type {
 } from "express";
 
 import { ZodError } from "zod";
-
 import { LoanService } from "../services/LoanService.js";
+
 
 export class LoanController {
     private readonly loanService: LoanService;
 
     constructor() {
-        this.loanService =
-            new LoanService();
+        this.loanService = new LoanService();
     }
+
+    // =========================
+    // CREATE
+    // =========================
 
     create = async (
         req: Request,
@@ -45,75 +48,59 @@ export class LoanController {
         } catch (error) {
             console.error(error);
 
-            if (
-                error instanceof Error
-            ) {
-                switch (error.message) {
-                    case "ASSET_NOT_FOUND":
-                        return res
-                            .status(404)
-                            .json({
-                                success: false,
-                                message:
-                                    "Patrimônio não encontrado.",
-                            });
-
-                    case "ASSET_NOT_AVAILABLE":
-                        return res
-                            .status(409)
-                            .json({
-                                success: false,
-                                message:
-                                    "O patrimônio não está disponível para empréstimo.",
-                            });
-
-                    case "RESPONSIBLE_NOT_FOUND":
-                        return res
-                            .status(404)
-                            .json({
-                                success: false,
-                                message:
-                                    "Responsável não encontrado.",
-                            });
-
-                    case "RESPONSIBLE_INACTIVE":
-                        return res
-                            .status(409)
-                            .json({
-                                success: false,
-                                message:
-                                    "O responsável está inativo.",
-                            });
-
-                    case "CREATOR_NOT_FOUND":
-                        return res
-                            .status(401)
-                            .json({
-                                success: false,
-                                message:
-                                    "Usuário responsável pelo cadastro não encontrado.",
-                            });
-                }
-            }
-
-            if (
-                error instanceof ZodError
-            ) {
+            if (error instanceof ZodError) {
                 return res.status(400).json({
                     success: false,
-                    message:
-                        "Dados inválidos.",
-                    errors:
-                        error.issues.map(
-                            (issue) => ({
-                                field: issue.path.join(
-                                    "."
-                                ),
-                                message:
-                                    issue.message,
-                            })
-                        ),
+                    message: "Dados inválidos.",
+                    errors: error.issues.map(
+                        (issue) => ({
+                            field: issue.path.join(
+                                "."
+                            ),
+                            message:
+                                issue.message,
+                        })
+                    ),
                 });
+            }
+
+            if (error instanceof Error) {
+                switch (error.message) {
+                    case "ASSET_NOT_FOUND":
+                        return res.status(404).json({
+                            success: false,
+                            message:
+                                "Patrimônio não encontrado.",
+                        });
+
+                    case "ASSET_NOT_AVAILABLE":
+                        return res.status(409).json({
+                            success: false,
+                            message:
+                                "O patrimônio não está disponível para empréstimo.",
+                        });
+
+                    case "RESPONSIBLE_NOT_FOUND":
+                        return res.status(404).json({
+                            success: false,
+                            message:
+                                "Responsável não encontrado.",
+                        });
+
+                    case "RESPONSIBLE_INACTIVE":
+                        return res.status(409).json({
+                            success: false,
+                            message:
+                                "O responsável está inativo.",
+                        });
+
+                    case "CREATOR_NOT_FOUND":
+                        return res.status(401).json({
+                            success: false,
+                            message:
+                                "Usuário responsável pelo cadastro não encontrado.",
+                        });
+                }
             }
 
             return res.status(500).json({
@@ -123,6 +110,10 @@ export class LoanController {
             });
         }
     };
+
+    // =========================
+    // FIND ALL
+    // =========================
 
     findAll = async (
         _req: Request,
@@ -147,6 +138,10 @@ export class LoanController {
         }
     };
 
+    // =========================
+    // FIND BY ID
+    // =========================
+
     findById = async (
         req: Request<{
             id: string;
@@ -169,7 +164,7 @@ export class LoanController {
             if (
                 error instanceof Error &&
                 error.message ===
-                    "LOAN_NOT_FOUND"
+                "LOAN_NOT_FOUND"
             ) {
                 return res.status(404).json({
                     success: false,
@@ -185,6 +180,10 @@ export class LoanController {
             });
         }
     };
+
+    // =========================
+    // UPDATE
+    // =========================
 
     update = async (
         req: Request<{
@@ -208,54 +207,58 @@ export class LoanController {
         } catch (error) {
             console.error(error);
 
-            if (
-                error instanceof Error
-            ) {
+            if (error instanceof ZodError) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Dados inválidos.",
+                    errors: error.issues.map(
+                        (issue) => ({
+                            field: issue.path.join(
+                                "."
+                            ),
+                            message:
+                                issue.message,
+                        })
+                    ),
+                });
+            }
+
+            if (error instanceof Error) {
                 switch (error.message) {
                     case "LOAN_NOT_FOUND":
-                        return res
-                            .status(404)
-                            .json({
-                                success: false,
-                                message:
-                                    "Empréstimo não encontrado.",
-                            });
+                        return res.status(404).json({
+                            success: false,
+                            message:
+                                "Empréstimo não encontrado.",
+                        });
 
                     case "LOAN_NOT_ACTIVE":
-                        return res
-                            .status(409)
-                            .json({
-                                success: false,
-                                message:
-                                    "Somente empréstimos ativos podem ser alterados.",
-                            });
+                        return res.status(409).json({
+                            success: false,
+                            message:
+                                "Somente empréstimos ativos podem ser alterados.",
+                        });
 
                     case "RESPONSIBLE_NOT_FOUND":
-                        return res
-                            .status(404)
-                            .json({
-                                success: false,
-                                message:
-                                    "Responsável não encontrado.",
-                            });
+                        return res.status(404).json({
+                            success: false,
+                            message:
+                                "Responsável não encontrado.",
+                        });
 
                     case "RESPONSIBLE_INACTIVE":
-                        return res
-                            .status(409)
-                            .json({
-                                success: false,
-                                message:
-                                    "O responsável está inativo.",
-                            });
+                        return res.status(409).json({
+                            success: false,
+                            message:
+                                "O responsável está inativo.",
+                        });
 
                     case "INVALID_DATES":
-                        return res
-                            .status(400)
-                            .json({
-                                success: false,
-                                message:
-                                    "Datas inválidas.",
-                            });
+                        return res.status(400).json({
+                            success: false,
+                            message:
+                                "Datas inválidas.",
+                        });
                 }
             }
 
@@ -266,6 +269,10 @@ export class LoanController {
             });
         }
     };
+
+    // =========================
+    // DELETE
+    // =========================
 
     delete = async (
         req: Request<{
@@ -282,32 +289,20 @@ export class LoanController {
         } catch (error) {
             console.error(error);
 
-            if (
-                error instanceof Error
-            ) {
-                if (
-                    error.message ===
-                    "LOAN_NOT_FOUND"
-                ) {
-                    return res
-                        .status(404)
-                        .json({
+            if (error instanceof Error) {
+                switch (error.message) {
+                    case "LOAN_NOT_FOUND":
+                        return res.status(404).json({
                             success: false,
                             message:
                                 "Empréstimo não encontrado.",
                         });
-                }
 
-                if (
-                    error.message ===
-                    "ACTIVE_LOAN_CANNOT_BE_DELETED"
-                ) {
-                    return res
-                        .status(409)
-                        .json({
+                    case "LOAN_CANNOT_BE_DELETED":
+                        return res.status(409).json({
                             success: false,
                             message:
-                                "Empréstimos ativos não podem ser excluídos.",
+                                "Empréstimos não podem ser excluídos.",
                         });
                 }
             }
@@ -320,6 +315,10 @@ export class LoanController {
         }
     };
 
+    // =========================
+    // RETURN
+    // =========================
+
     return = async (
         req: Request<{
             id: string;
@@ -327,9 +326,21 @@ export class LoanController {
         res: Response
     ) => {
         try {
+            const user = req.user;
+
+            if (!user) {
+                return res.status(401).json({
+                    success: false,
+                    message:
+                        "Usuário não autenticado.",
+                });
+            }
+
             const loan =
                 await this.loanService.returnLoan(
-                    req.params.id
+                    req.params.id,
+                    user.id,
+                    req.body
                 );
 
             return res.status(200).json({
@@ -341,36 +352,51 @@ export class LoanController {
         } catch (error) {
             console.error(error);
 
-            if (
-                error instanceof Error
-            ) {
+            if (error instanceof ZodError) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Dados inválidos.",
+                    errors: error.issues.map(
+                        (issue) => ({
+                            field: issue.path.join(
+                                "."
+                            ),
+                            message:
+                                issue.message,
+                        })
+                    ),
+                });
+            }
+
+            if (error instanceof Error) {
                 switch (error.message) {
                     case "LOAN_NOT_FOUND":
-                        return res
-                            .status(404)
-                            .json({
-                                success: false,
-                                message:
-                                    "Empréstimo não encontrado.",
-                            });
+                        return res.status(404).json({
+                            success: false,
+                            message:
+                                "Empréstimo não encontrado.",
+                        });
 
                     case "LOAN_ALREADY_RETURNED":
-                        return res
-                            .status(409)
-                            .json({
-                                success: false,
-                                message:
-                                    "Este empréstimo já foi devolvido.",
-                            });
+                        return res.status(409).json({
+                            success: false,
+                            message:
+                                "Este empréstimo já foi devolvido.",
+                        });
 
                     case "ASSET_NOT_IN_USE":
-                        return res
-                            .status(409)
-                            .json({
-                                success: false,
-                                message:
-                                    "O patrimônio não está marcado como emprestado.",
-                            });
+                        return res.status(409).json({
+                            success: false,
+                            message:
+                                "O patrimônio não está marcado como emprestado.",
+                        });
+
+                    case "RETURNER_NOT_FOUND":
+                        return res.status(401).json({
+                            success: false,
+                            message:
+                                "Usuário responsável pela devolução não encontrado.",
+                        });
                 }
             }
 
@@ -378,6 +404,96 @@ export class LoanController {
                 success: false,
                 message:
                     "Erro interno do servidor.",
+            });
+        }
+    };
+
+    // =========================
+    // HISTORY
+    // =========================
+
+    findHistory = async (
+        req: Request,
+        res: Response
+    ) => {
+        try {
+            const { patrimonioId } =
+                req.query;
+
+            const history =
+                await this.loanService.findHistory(
+                    typeof patrimonioId ===
+                        "string"
+                        ? patrimonioId
+                        : undefined
+                );
+
+            return res.status(200).json({
+                success: true,
+                data: history,
+            });
+        } catch (error) {
+            console.error(error);
+
+            if (
+                error instanceof Error &&
+                error.message ===
+                "ASSET_NOT_FOUND"
+            ) {
+                return res.status(404).json({
+                    success: false,
+                    message:
+                        "Patrimônio não encontrado.",
+                });
+            }
+
+            return res.status(500).json({
+                success: false,
+                message:
+                    "Erro ao buscar histórico de empréstimos.",
+            });
+        }
+    };
+
+    // =========================
+    // HISTORY BY ID
+    // =========================
+
+    findHistoryById = async (
+        req: Request<{
+            id: string;
+        }>,
+        res: Response
+    ) => {
+        try {
+            const history =
+                await this.loanService.findHistoryById(
+                    req.params.id
+                );
+
+            return res.status(200).json({
+                success: true,
+                data: history,
+            });
+        } catch (error) {
+            console.error(error);
+
+            if (
+                error instanceof Error &&
+                error.message ===
+                "LOAN_HISTORY_NOT_FOUND"
+            ) {
+                return res.status(404).json({
+                    success: false,
+                    message:
+                        "Registro histórico não encontrado.",
+                });
+            }
+
+            return res.status(500).json({
+                success: false,
+                message:
+                    "Erro ao buscar registro histórico.",
             });
         }
     };

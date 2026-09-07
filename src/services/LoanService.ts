@@ -1,151 +1,148 @@
+
+import { AssetStatus, LoanStatus } from "../generated/prisma/enums.js";
 import prisma from "../lib/prisma.js";
 
 import type {
     CreateLoanDTO,
     UpdateLoanDTO,
+    ReturnLoanDTO,
 } from "../schema/loan.schema.js";
 
 export class LoanService {
+    // =========================
+    // CREATE
+    // =========================
+
     async create(
         data: CreateLoanDTO,
         createdById: string
     ) {
-        const loan =
-            await prisma.$transaction(
-                async (tx) => {
-                    const asset =
-                        await tx.asset.findUnique({
-                            where: {
-                                id: data.assetId,
-                            },
-                        });
+        const asset =
+            await prisma.asset.findUnique({
+                where: {
+                    id: data.assetId,
+                },
+            });
 
-                    if (!asset) {
-                        throw new Error(
-                            "ASSET_NOT_FOUND"
-                        );
-                    }
+        if (!asset) {
+            throw new Error(
+                "ASSET_NOT_FOUND"
+            );
+        }
 
-                    if (
-                        asset.status !==
-                        "AVAILABLE"
-                    ) {
-                        throw new Error(
-                            "ASSET_NOT_AVAILABLE"
-                        );
-                    }
+        if (
+            asset.status !==
+            AssetStatus.AVAILABLE
+        ) {
+            throw new Error(
+                "ASSET_NOT_AVAILABLE"
+            );
+        }
 
-                    const responsible =
-                        await tx.user.findUnique({
-                            where: {
-                                id: data.responsibleId,
-                            },
-                        });
+        const responsible =
+            await prisma.user.findUnique({
+                where: {
+                    id: data.responsibleId,
+                },
+            });
 
-                    if (!responsible) {
-                        throw new Error(
-                            "RESPONSIBLE_NOT_FOUND"
-                        );
-                    }
+        if (!responsible) {
+            throw new Error(
+                "RESPONSIBLE_NOT_FOUND"
+            );
+        }
 
-                    if (
-                        responsible.status !==
-                        "ACTIVE"
-                    ) {
-                        throw new Error(
-                            "RESPONSIBLE_INACTIVE"
-                        );
-                    }
+        if (
+            responsible.status !== "ACTIVE"
+        ) {
+            throw new Error(
+                "RESPONSIBLE_INACTIVE"
+            );
+        }
 
-                    const createdBy =
-                        await tx.user.findUnique({
-                            where: {
-                                id: createdById,
-                            },
-                        });
+        const creator =
+            await prisma.user.findUnique({
+                where: {
+                    id: createdById,
+                },
+            });
 
-                    if (!createdBy) {
-                        throw new Error(
-                            "CREATOR_NOT_FOUND"
-                        );
-                    }
+        if (!creator) {
+            throw new Error(
+                "CREATOR_NOT_FOUND"
+            );
+        }
 
-                    const newLoan =
-                        await tx.loan.create({
-                            data: {
-                                assetId:
-                                    data.assetId,
-
-                                responsibleId:
-                                    data.responsibleId,
-
-                                createdById,
-
-                                purpose:
-                                    data.purpose,
-
-                                withdrawalDate:
-                                    data.withdrawalDate,
-
-                                expectedReturnDate:
-                                    data.expectedReturnDate,
-
-                                status: "ACTIVE",
-                            },
-                        });
-
-                    await tx.asset.update({
-                        where: {
-                            id: data.assetId,
-                        },
+        return await prisma.$transaction(
+            async (tx) => {
+                const loan =
+                    await tx.loan.create({
                         data: {
-                            status: "IN_USE",
+                            assetId:
+                                data.assetId,
+
+                            responsibleId:
+                                data.responsibleId,
+
+                            createdById,
+
+                            purpose:
+                                data.purpose,
+
+                            withdrawalDate:
+                                data.withdrawalDate,
+
+                            expectedReturnDate:
+                                data.expectedReturnDate,
+
+                            status:
+                                LoanStatus.ACTIVE,
+                        },
+
+                        include: {
+                            asset: true,
+                            responsible: true,
+                            createdBy: true,
                         },
                     });
 
-                    return newLoan;
-                }
-            );
+                await tx.asset.update({
+                    where: {
+                        id: data.assetId,
+                    },
+                    data: {
+                        status:
+                            AssetStatus.IN_USE,
+                    },
+                });
 
-        return this.findById(loan.id);
+                return loan;
+            }
+        );
     }
+
+    // =========================
+    // FIND ALL
+    // =========================
 
     async findAll() {
         return await prisma.loan.findMany({
-            include: {
-                asset: {
-                    select: {
-                        id: true,
-                        code: true,
-                        name: true,
-                        category: true,
-                        type: true,
-                        status: true,
-                    },
-                },
-
-                responsible: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                    },
-                },
-
-                createdBy: {
-                    select: {
-                        id: true,
-                        name: true,
-                        email: true,
-                    },
-                },
-            },
-
             orderBy: {
                 createdAt: "desc",
             },
+
+            include: {
+                asset: true,
+                responsible: true,
+                createdBy: true,
+                returnedBy: true,
+            },
         });
     }
+
+    // =========================
+    // FIND BY ID
+    // =========================
 
     async findById(id: string) {
         const loan =
@@ -155,33 +152,10 @@ export class LoanService {
                 },
 
                 include: {
-                    asset: {
-                        select: {
-                            id: true,
-                            code: true,
-                            name: true,
-                            category: true,
-                            type: true,
-                            status: true,
-                        },
-                    },
-
-                    responsible: {
-                        select: {
-                            id: true,
-                            name: true,
-                            email: true,
-                            status: true,
-                        },
-                    },
-
-                    createdBy: {
-                        select: {
-                            id: true,
-                            name: true,
-                            email: true,
-                        },
-                    },
+                    asset: true,
+                    responsible: true,
+                    createdBy: true,
+                    returnedBy: true,
                 },
             });
 
@@ -193,6 +167,10 @@ export class LoanService {
 
         return loan;
     }
+
+    // =========================
+    // UPDATE
+    // =========================
 
     async update(
         id: string,
@@ -211,7 +189,10 @@ export class LoanService {
             );
         }
 
-        if (loan.status !== "ACTIVE") {
+        if (
+            loan.status !==
+            LoanStatus.ACTIVE
+        ) {
             throw new Error(
                 "LOAN_NOT_ACTIVE"
             );
@@ -241,24 +222,18 @@ export class LoanService {
             }
         }
 
-        const withdrawalDate =
-            data.withdrawalDate ??
-            loan.withdrawalDate;
-
-        const expectedReturnDate =
-            data.expectedReturnDate ??
-            loan.expectedReturnDate;
-
         if (
-            expectedReturnDate <
-            withdrawalDate
+            data.withdrawalDate &&
+            data.expectedReturnDate &&
+            data.expectedReturnDate <
+            data.withdrawalDate
         ) {
             throw new Error(
                 "INVALID_DATES"
             );
         }
 
-        await prisma.loan.update({
+        return await prisma.loan.update({
             where: {
                 id,
             },
@@ -288,10 +263,19 @@ export class LoanService {
                         data.expectedReturnDate,
                 }),
             },
-        });
 
-        return this.findById(id);
+            include: {
+                asset: true,
+                responsible: true,
+                createdBy: true,
+                returnedBy: true,
+            },
+        });
     }
+
+    // =========================
+    // DELETE
+    // =========================
 
     async delete(id: string) {
         const loan =
@@ -307,86 +291,196 @@ export class LoanService {
             );
         }
 
-        if (loan.status === "ACTIVE") {
+        /*
+         * Empréstimos não devem ser removidos,
+         * pois fazem parte do histórico.
+         */
+        throw new Error(
+            "LOAN_CANNOT_BE_DELETED"
+        );
+    }
+
+    // =========================
+    // RETURN
+    // =========================
+
+    async returnLoan(
+        id: string,
+        returnedById: string,
+        data: ReturnLoanDTO
+    ) {
+        const loan =
+            await prisma.loan.findUnique({
+                where: {
+                    id,
+                },
+
+                include: {
+                    asset: true,
+                },
+            });
+
+        if (!loan) {
             throw new Error(
-                "ACTIVE_LOAN_CANNOT_BE_DELETED"
+                "LOAN_NOT_FOUND"
             );
         }
 
-        await prisma.loan.delete({
+        if (
+            loan.status ===
+            LoanStatus.RETURNED
+        ) {
+            throw new Error(
+                "LOAN_ALREADY_RETURNED"
+            );
+        }
+
+        if (
+            loan.asset.status !==
+            AssetStatus.IN_USE
+        ) {
+            throw new Error(
+                "ASSET_NOT_IN_USE"
+            );
+        }
+
+        const returner =
+            await prisma.user.findUnique({
+                where: {
+                    id: returnedById,
+                },
+            });
+
+        if (!returner) {
+            throw new Error(
+                "RETURNER_NOT_FOUND"
+            );
+        }
+
+        return await prisma.$transaction(
+            async (tx) => {
+                const returnedLoan =
+                    await tx.loan.update({
+                        where: {
+                            id,
+                        },
+
+                        data: {
+                            status:
+                                LoanStatus.RETURNED,
+
+                            returnedAt:
+                                new Date(),
+
+                            returnedById,
+
+                            returnCondition:
+                                data.returnCondition,
+
+                            returnNotes:
+                                data.returnNotes,
+                        },
+
+                        include: {
+                            asset: true,
+                            responsible: true,
+                            createdBy: true,
+                            returnedBy: true,
+                        },
+                    });
+
+                await tx.asset.update({
+                    where: {
+                        id: loan.assetId,
+                    },
+
+                    data: {
+                        status:
+                            AssetStatus.AVAILABLE,
+                    },
+                });
+
+                return returnedLoan;
+            }
+        );
+    }
+
+    // =========================
+    // HISTORY
+    // =========================
+
+    async findHistory(
+        patrimonioId?: string
+    ) {
+        if (patrimonioId) {
+            const asset =
+                await prisma.asset.findUnique({
+                    where: {
+                        id: patrimonioId,
+                    },
+                });
+
+            if (!asset) {
+                throw new Error(
+                    "ASSET_NOT_FOUND"
+                );
+            }
+        }
+
+        return await prisma.loan.findMany({
             where: {
-                id,
+                status: LoanStatus.RETURNED,
+
+                ...(patrimonioId && {
+                    assetId: patrimonioId,
+                }),
+            },
+
+            orderBy: {
+                returnedAt: "desc",
+            },
+
+            include: {
+                asset: true,
+
+                responsible: true,
+
+                createdBy: true,
+
+                returnedBy: true,
             },
         });
     }
 
-    async returnLoan(id: string) {
-        const result =
-            await prisma.$transaction(
-                async (tx) => {
-                    const loan =
-                        await tx.loan.findUnique({
-                            where: {
-                                id,
-                            },
-                            include: {
-                                asset: true,
-                            },
-                        });
+    // =========================
+    // HISTORY BY ID
+    // =========================
 
-                    if (!loan) {
-                        throw new Error(
-                            "LOAN_NOT_FOUND"
-                        );
-                    }
+    async findHistoryById(id: string) {
+        const loan =
+            await prisma.loan.findFirst({
+                where: {
+                    id,
+                    status: LoanStatus.RETURNED,
+                },
 
-                    if (
-                        loan.status !==
-                        "ACTIVE"
-                    ) {
-                        throw new Error(
-                            "LOAN_ALREADY_RETURNED"
-                        );
-                    }
+                include: {
+                    asset: true,
 
-                    if (
-                        loan.asset.status !==
-                        "IN_USE"
-                    ) {
-                        throw new Error(
-                            "ASSET_NOT_IN_USE"
-                        );
-                    }
+                    responsible: true,
 
-                    const updatedLoan =
-                        await tx.loan.update({
-                            where: {
-                                id,
-                            },
-                            data: {
-                                status:
-                                    "RETURNED",
+                    createdBy: true,
 
-                                returnedAt:
-                                    new Date(),
-                            },
-                        });
+                    returnedBy: true,
+                },
+            });
 
-                    await tx.asset.update({
-                        where: {
-                            id:
-                                loan.assetId,
-                        },
-                        data: {
-                            status:
-                                "AVAILABLE",
-                        },
-                    });
-
-                    return updatedLoan;
-                }
+        if (!loan) {
+            throw new Error(
+                "LOAN_HISTORY_NOT_FOUND"
             );
+        }
 
-        return this.findById(result.id);
+        return loan;
     }
 }

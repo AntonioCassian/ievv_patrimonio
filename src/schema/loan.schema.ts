@@ -109,10 +109,38 @@ export const loanIdSchema = z.object({
         ),
 });
 
+export const returnLoanSchema = z.object({
+    returnCondition: z
+        .string()
+        .trim()
+        .min(
+            1,
+            "A condição do patrimônio é obrigatória"
+        )
+        .max(
+            100,
+            "A condição do patrimônio deve ter no máximo 100 caracteres"
+        ),
+
+    returnNotes: z
+        .string()
+        .trim()
+        .max(
+            1000,
+            "As observações devem ter no máximo 1000 caracteres"
+        )
+        .optional(),
+});
+
+
 export type CreateLoanDTO = z.infer<
     typeof createLoanSchema
 >;
 
 export type UpdateLoanDTO = z.infer<
     typeof updateLoanSchema
+>;
+
+export type ReturnLoanDTO = z.infer<
+    typeof returnLoanSchema
 >;
