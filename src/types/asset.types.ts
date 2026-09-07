@@ -1,7 +1,9 @@
+import type { AssetCategory } from "../generated/prisma/enums.js";
+
 export interface CreateAssetDTO {
     name: string;
     description?: string;
-    category: string;
+    category: AssetCategory;
     departmentId: string;
     type: string;
     responsibleId?: string;
@@ -13,7 +15,7 @@ export interface CreateAssetDTO {
 export interface UpdateAssetDTO {
     name?: string;
     description?: string | null;
-    category?: string;
+    category?: AssetCategory;
     departmentId?: string;
     type?: string;
     responsibleId?: string | null;
@@ -29,7 +31,7 @@ export interface UpdateAssetDTO {
 
 export interface AssetFiltersDTO {
     name?: string;
-    category?: string;
+    category?: AssetCategory;
     department?: string;
     status?:
         | "AVAILABLE"

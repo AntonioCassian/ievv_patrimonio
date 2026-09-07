@@ -224,7 +224,25 @@ export const assetIdSchema = z.object({
 export const assetFiltersSchema = z.object({
     name: z.string().trim().min(1).optional(),
 
-    category: z.string().trim().min(1).optional(),
+    category: z
+        .enum([
+            "UTENSILIO",
+            "COZINHA",
+            "ACESSORIO",
+            "MOVEIS",
+            "DIVERSOS",
+            "DECORACAO",
+            "SOM",
+            "ELETRODOMESTICO",
+            "INFORMATICA",
+            "ILUMINACAO",
+            "LIVROS",
+            "HIDRAULICOS",
+            "FOTOGRAFIA",
+        ], {
+            message: "A categoria deve ser válida",
+        })
+        .optional(),
 
     department: z.string().trim().min(1).optional(),
 
