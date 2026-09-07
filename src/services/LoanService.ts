@@ -377,8 +377,10 @@ export class LoanService {
                             returnCondition:
                                 data.returnCondition,
 
-                            returnNotes:
-                                data.returnNotes,
+                            ...(data.returnNotes !== undefined && {
+                                returnNotes:
+                                    data.returnNotes,
+                            }),
                         },
 
                         include: {
@@ -403,6 +405,7 @@ export class LoanService {
                 return returnedLoan;
             }
         );
+
     }
 
     // =========================

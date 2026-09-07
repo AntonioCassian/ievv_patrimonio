@@ -7,6 +7,7 @@ import loanRoutes from "./loan.routes.js";
 import assetRoutes from "./asset.routes.js";
 import assetOperationRoutes from "./asset-operation.routes.js";
 import chutchSettingsRoutes from "./church-settings.routes.js";
+import notificationRoutes from "./notifications.routes.js";
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use("/api", loanRoutes);
 router.use("/api", assetRoutes);
 router.use("/api", assetOperationRoutes);
 router.use("/api", chutchSettingsRoutes);
+router.use("/api", notificationRoutes);
 
 export default router;

@@ -12,6 +12,10 @@ datasource db {
   provider = "postgresql"
 }
 
+// =========================
+// ENUMS
+// =========================
+
 enum Role {
   ADMINISTRADOR
   PASTOR
@@ -74,6 +78,18 @@ enum AssetCategory {
   FOTOGRAFIA
 }
 
+enum NotificationType {
+  EMPRESTIMO
+  DEVOLUCAO
+  USUFRUTO
+  DOACAO
+  PATRIMONIO
+}
+
+// =========================
+// USER
+// =========================
+
 model User {
   id                String     @id @default(cuid())
   name              String
@@ -85,47 +101,101 @@ model User {
   temporaryPassword Boolean    @default(false)
   lastLoginAt       DateTime?
 
+  // =========================
+  // DEPARTMENT
+  // =========================
+
   departmentId String?
   department   Department? @relation("DepartmentUsers", fields: [departmentId], references: [id])
 
   ledDepartments     Department[] @relation("DepartmentLeader")
   createdDepartments Department[] @relation("DepartmentCreator")
 
+  // =========================
+  // PASSWORD RESET
+  // =========================
+
   passwordResets PasswordReset[]
+
+  // =========================
+  // ASSETS
+  // =========================
 
   responsibleAssets Asset[] @relation("AssetResponsible")
   createdAssets     Asset[] @relation("AssetCreator")
 
+  // =========================
+  // LOANS
+  // =========================
+
   loansAsResponsible Loan[] @relation("ResponsibleLoans")
   createdLoans       Loan[] @relation("LoanCreator")
+  returnedLoans      Loan[] @relation("LoanReturner")
+
+  // =========================
+  // ASSET OPERATIONS
+  // =========================
 
   operationResponsible AssetOperation[] @relation("OperationResponsible")
+  createdOperations    AssetOperation[] @relation("OperationCreator")
 
-  createdOperations AssetOperation[] @relation("OperationCreator")
+  // =========================
+  // USUFRUCT HISTORY
+  // =========================
 
   usufructHistoryCreated UsufructHistory[] @relation("UsufructHistoryCreator")
 
+  // =========================
+  // NOTIFICATIONS
+  // =========================
+
+  notifications Notification[] @relation("UserNotifications")
+
+  notificationSettings NotificationSettings?
+
+  // =========================
+  // TIMESTAMPS
+  // =========================
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  // loans     Loan[]
-  returnedLoans Loan[] @relation("LoanReturner")
 
   @@index([departmentId])
 }
+
+// =========================
+// DEPARTMENT
+// =========================
 
 model Department {
   id     String           @id @default(cuid())
   name   String           @unique
   status DepartmentStatus @default(ACTIVE)
 
+  // =========================
+  // LEADER
+  // =========================
+
   leaderId String
   leader   User   @relation("DepartmentLeader", fields: [leaderId], references: [id])
+
+  // =========================
+  // USERS / ASSETS
+  // =========================
 
   users  User[]  @relation("DepartmentUsers")
   assets Asset[] @relation("DepartmentAssets")
 
+  // =========================
+  // CREATOR
+  // =========================
+
   createdById String?
   createdBy   User?   @relation("DepartmentCreator", fields: [createdById], references: [id])
+
+  // =========================
+  // TIMESTAMPS
+  // =========================
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -133,6 +203,10 @@ model Department {
   @@index([leaderId])
   @@index([createdById])
 }
+
+// =========================
+// PASSWORD RESET
+// =========================
 
 model PasswordReset {
   id        String    @id @default(cuid())
@@ -148,6 +222,10 @@ model PasswordReset {
   @@index([tokenHash])
 }
 
+// =========================
+// ASSET
+// =========================
+
 model Asset {
   id              String        @id @default(cuid())
   code            String        @unique
@@ -160,27 +238,49 @@ model Asset {
   imageUrl        String?
   status          AssetStatus   @default(AVAILABLE)
 
-  // Quantidade do patrimônio
+  // =========================
+  // QUANTITY
+  // =========================
+
   quantity          Int @default(1)
   quantityAvailable Int @default(1)
 
-  // Departamento
+  // =========================
+  // DEPARTMENT
+  // =========================
+
   departmentId String
   department   Department @relation("DepartmentAssets", fields: [departmentId], references: [id])
 
-  // Responsável pelo patrimônio
+  // =========================
+  // RESPONSIBLE
+  // =========================
+
   responsibleId String?
   responsible   User?   @relation("AssetResponsible", fields: [responsibleId], references: [id])
 
-  // Usuário que cadastrou
+  // =========================
+  // CREATOR
+  // =========================
+
   createdById String
   createdBy   User   @relation("AssetCreator", fields: [createdById], references: [id])
 
-  // Empréstimos
+  // =========================
+  // LOANS
+  // =========================
+
   loans Loan[] @relation("AssetLoans")
 
-  // Usufrutos e doações
+  // =========================
+  // OPERATIONS
+  // =========================
+
   operations AssetOperation[] @relation("AssetOperations")
+
+  // =========================
+  // TIMESTAMPS
+  // =========================
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -191,25 +291,47 @@ model Asset {
   @@index([status])
 }
 
+// =========================
+// LOAN
+// =========================
+
 model Loan {
   id String @id @default(cuid())
 
-  // Patrimônio
+  // =========================
+  // ASSET
+  // =========================
+
   assetId String
   asset   Asset  @relation("AssetLoans", fields: [assetId], references: [id])
 
-  // Responsável pelo empréstimo
+  // =========================
+  // RESPONSIBLE
+  // =========================
+
   responsibleId String
   responsible   User   @relation("ResponsibleLoans", fields: [responsibleId], references: [id])
 
-  // Usuário que cadastrou o empréstimo
+  // =========================
+  // CREATOR
+  // =========================
+
   createdById String
   createdBy   User   @relation("LoanCreator", fields: [createdById], references: [id])
+
+  // =========================
+  // LOAN DATA
+  // =========================
 
   purpose            String
   withdrawalDate     DateTime
   expectedReturnDate DateTime
-  returnedAt         DateTime?
+
+  // =========================
+  // RETURN
+  // =========================
+
+  returnedAt DateTime?
 
   returnedById String?
   returnedBy   User?   @relation("LoanReturner", fields: [returnedById], references: [id])
@@ -217,7 +339,15 @@ model Loan {
   returnCondition String?
   returnNotes     String?
 
+  // =========================
+  // STATUS
+  // =========================
+
   status LoanStatus @default(ACTIVE)
+
+  // =========================
+  // TIMESTAMPS
+  // =========================
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -225,8 +355,13 @@ model Loan {
   @@index([assetId])
   @@index([responsibleId])
   @@index([createdById])
+  @@index([returnedById])
   @@index([status])
 }
+
+// =========================
+// ASSET OPERATION
+// =========================
 
 model AssetOperation {
   id String @id @default(cuid())
@@ -235,7 +370,10 @@ model AssetOperation {
 
   status OperationStatus @default(ACTIVE)
 
-  // Patrimônio
+  // =========================
+  // ASSET
+  // =========================
+
   assetId String
   asset   Asset  @relation("AssetOperations", fields: [assetId], references: [id])
 
@@ -244,9 +382,9 @@ model AssetOperation {
   operationDate DateTime
   observations  String?
 
-  // ====================
-  // USUFRUTO
-  // ====================
+  // =========================
+  // USUFRUCT
+  // =========================
 
   responsibleId String?
   responsible   User?   @relation("OperationResponsible", fields: [responsibleId], references: [id])
@@ -255,20 +393,30 @@ model AssetOperation {
   endDate   DateTime?
   purpose   String?
 
-  // ====================
-  // DOAÇÃO
-  // ====================
+  // =========================
+  // DONATION
+  // =========================
 
   donor        String?
   donationDate DateTime?
   document     String?
 
-  // Usuário que realizou a operação
+  // =========================
+  // CREATOR
+  // =========================
+
   createdById String
   createdBy   User   @relation("OperationCreator", fields: [createdById], references: [id])
 
-  // Histórico das renovações
+  // =========================
+  // HISTORY
+  // =========================
+
   histories UsufructHistory[]
+
+  // =========================
+  // TIMESTAMPS
+  // =========================
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -280,6 +428,10 @@ model AssetOperation {
   @@index([status])
 }
 
+// =========================
+// USUFRUCT HISTORY
+// =========================
+
 model UsufructHistory {
   id String @id @default(cuid())
 
@@ -288,14 +440,11 @@ model UsufructHistory {
 
   type UsufructHistoryType
 
-  // Datas
   previousEndDate DateTime?
   newEndDate      DateTime?
 
-  // Justificativa da renovação
   justification String?
 
-  // Usuário que realizou a alteração
   createdById String
   createdBy   User   @relation("UsufructHistoryCreator", fields: [createdById], references: [id])
 
@@ -305,6 +454,10 @@ model UsufructHistory {
   @@index([createdById])
 }
 
+// =========================
+// CHURCH SETTINGS
+// =========================
+
 model ChurchSettings {
   id      String  @id @default(cuid())
   name    String
@@ -312,6 +465,61 @@ model ChurchSettings {
   city    String?
   state   String?
   phone   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// =========================
+// NOTIFICATION
+// =========================
+
+model Notification {
+  id      String           @id @default(cuid())
+  title   String
+  message String
+  type    NotificationType
+  isRead  Boolean          @default(false)
+
+  userId String
+  user   User @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([type])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// =========================
+// NOTIFICATION SETTINGS
+// =========================
+
+model NotificationSettings {
+  id String @id @default(cuid())
+
+  // =========================
+  // USER
+  // =========================
+
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // =========================
+  // NOTIFICATION TYPES
+  // =========================
+
+  notificacaoEmprestimo Boolean @default(true)
+  notificacaoDevolucao  Boolean @default(true)
+  notificacaoUsufruto   Boolean @default(true)
+  notificacaoDoacao     Boolean @default(true)
+  notificacaoPatrimonio Boolean @default(true)
+
+  // =========================
+  // TIMESTAMPS
+  // =========================
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
